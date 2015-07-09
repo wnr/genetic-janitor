@@ -1,0 +1,93 @@
+<html>
+    <head>
+        <style>
+            #map {
+                border: 2px solid black;
+                display: inline-block;
+            }
+
+            #map .cell {
+                width: 40px;
+                height: 40px;
+                border: 2px solid black;
+                display: inline-block;
+            }
+
+            #map .cell.junk {
+                background-color: red;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="container">
+            <div id="map"></div>
+        </div>
+        <script>
+            (function() {
+                var MAP_CELL_TYPE_FREE = "free";
+                var MAP_CELL_TYPE_JUNK = "junk";
+                var MAP_CELL_TYPE_WALL = "wall";
+
+                function Map(size, junkProbability) {
+                    var cells = [];
+
+                    for (var i = 0; i < size; i++) {
+                        cells[i] = [];
+
+                        for (var j = 1; j < size; j++) {
+                            var type = MAP_CELL_TYPE_FREE;
+
+                            if (i === 0 || i === size - 1 || j === 0 || j === size - 1) {
+                                type = MAP_CELL_TYPE_WALL;
+                            } else if (shouldOccur(junkProbability)) {
+                                type = MAP_CELL_TYPE_JUNK;
+                            }
+
+                            cells[i].push({
+                                type: type
+                            });
+                        }
+                    }
+
+                    return {
+                        width: size,
+                        height: size,
+                        junkProbability: junkProbability,
+                        cells: cells
+                    };
+                }
+
+                function shouldOccur(probability) {
+                    return probability > Math.random();
+                }
+
+                // View
+
+                function render(map) {
+                    var mapElement = document.getElementById("map");
+                    var fragment = document.createDocumentFragment();
+
+                    map.cells.forEach(function iterateRows(row) {
+                        var rowElement = document.createElement("div");
+                        rowElement.className = "row";
+                        row.forEach(function iterateCols(cell) {
+                            var cellElement = document.createElement("div");
+                            cellElement.className = "cell " + cell.type;
+                            rowElement.appendChild(cellElement);
+                        });
+                        fragment.appendChild(rowElement);
+                    });
+
+                    mapElement.innerHTML = "";
+                    mapElement.appendChild(fragment);
+                }
+
+                // Run
+
+                var map = Map(10, 0.2);
+                render(map);
+
+            })();
+        </script>
+    </body>
+</html>
