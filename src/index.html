@@ -16,6 +16,10 @@
             #map .cell.junk {
                 background-color: red;
             }
+
+            #map .cell.wall {
+                background-color: #666;
+            }
         </style>
     </head>
     <body>
@@ -34,7 +38,7 @@
                     for (var i = 0; i < size; i++) {
                         cells[i] = [];
 
-                        for (var j = 1; j < size; j++) {
+                        for (var j = 0; j < size; j++) {
                             var type = MAP_CELL_TYPE_FREE;
 
                             if (i === 0 || i === size - 1 || j === 0 || j === size - 1) {
@@ -84,7 +88,7 @@
 
                 // Run
 
-                var map = Map(10, 0.2);
+                var map = Map(10, 0.1);
                 render(map);
 
             })();
