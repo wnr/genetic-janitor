@@ -30,7 +30,7 @@
                 margin-left: 25%;
             }
 
-            #score-container {
+            #side {
                 margin-left: 20px;
                 float: left;
             }
@@ -39,7 +39,11 @@
     <body>
         <div id="container">
             <div id="map"></div>
-            <div id="score-container"><h1>Score: <span id="score"></span></h4></div>
+            <div id="side">
+                <div><h1>Score: <span id="score"></span></h4></div>
+                <div><h1>Actions: <span id="actions-performed"></span></h4></div>               
+            </div>
+ 
         </div>
         <script>
             (function() {
@@ -96,9 +100,14 @@
                     var currentCoordinate = startCoordinate;
                     getCellByCoordinate(map, currentCoordinate).type = MAP_CELL_TYPE_FREE;
                     var score = 0;
+                    var actionsPerformed = 0;
 
                     function getScore() {
                         return score;
+                    }
+
+                    function getActionsPerformed() {
+                        return actionsPerformed;
                     }
 
                     function getCurrentPosition() {
@@ -110,6 +119,7 @@
                     }
 
                     function go(xDir, yDir) {
+                        actionsPerformed++;
                         var newCoordinate = Coordinate(currentCoordinate.x + xDir, currentCoordinate.y + yDir);
 
                         var cell = getCellByCoordinate(map, newCoordinate);
@@ -127,6 +137,7 @@
 
                     return {
                         getScore: getScore,
+                        getActionsPerformed: getActionsPerformed,
                         getCurrentPosition: getCurrentPosition,
                         getCellType: getCellType,
                         map: map,
@@ -172,7 +183,12 @@
 
                     function renderScore(game) {
                         var element = document.getElementById("score");
-                        score.innerHTML = game.getScore();
+                        element.innerHTML = game.getScore();
+                    }
+
+                    function renderActionsPerformed(game) {
+                        var element = document.getElementById("actions-performed");
+                        element.innerHTML = game.getActionsPerformed();
                     }
 
                     function registerActionListeners(game, onActionCallback) {
@@ -213,8 +229,13 @@
                             updateDirection(firstKey);
                             updateDirection(secondKey);
 
+                            if (!xDir && !yDir) {
+                                return false;
+                            }
+
                             game.go(xDir, yDir);
                             onActionCallback();
+                            return true;
                         }
 
                         document.addEventListener("keydown", function(event) {
@@ -226,7 +247,9 @@
                             }
 
                             //TODO: Remove this for delay which supports diagonal play.
-                            handleEvent(event.keyCode);
+                            if (!handleEvent(event.keyCode)) {
+                                event.preventDefault();
+                            }
                             event.preventDefault();
                             return false;
 
@@ -242,6 +265,7 @@
                         function render() {
                             renderGame(game);
                             renderScore(game);
+                            renderActionsPerformed(game);
                         }
 
                         render();
