@@ -40,7 +40,7 @@
         <div id="container">
             <div id="map"></div>
             <div id="side">
-                <div><h1>Score: <span id="score"></span></h4></div>
+                <div><h1>Score: <span id="score"></span>/<span id="max-score"></span></h4></div>
                 <div><h1>Actions: <span id="actions-performed"></span></h4></div>               
             </div>
  
@@ -99,11 +99,20 @@
                     //TODO: clone map.
                     var currentCoordinate = startCoordinate;
                     getCellByCoordinate(map, currentCoordinate).type = MAP_CELL_TYPE_FREE;
+                    var numJunkCells = map.cells.reduce(function (sum, row) {
+                        return row.reduce(function (rowSum, cell) {
+                            return rowSum + (cell.type === MAP_CELL_TYPE_JUNK ? 1 : 0);
+                        }, sum);
+                    }, 0);
                     var score = 0;
                     var actionsPerformed = 0;
 
                     function getScore() {
                         return score;
+                    }
+
+                    function getMaxScore() {
+                        return numJunkCells;
                     }
 
                     function getActionsPerformed() {
@@ -137,6 +146,7 @@
 
                     return {
                         getScore: getScore,
+                        getMaxScore: getMaxScore,
                         getActionsPerformed: getActionsPerformed,
                         getCurrentPosition: getCurrentPosition,
                         getCellType: getCellType,
@@ -182,8 +192,10 @@
                     }
 
                     function renderScore(game) {
-                        var element = document.getElementById("score");
-                        element.innerHTML = game.getScore();
+                        var scoreElement = document.getElementById("score");
+                        scoreElement.innerHTML = game.getScore();
+                        var maxScoreElement = document.getElementById("max-score");
+                        maxScoreElement.innerHTML = game.getMaxScore();
                     }
 
                     function renderActionsPerformed(game) {
