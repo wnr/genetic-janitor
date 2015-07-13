@@ -133,15 +133,24 @@
 
                         var cell = getCellByCoordinate(map, newCoordinate);
 
-                        if (cell.type === MAP_CELL_TYPE_JUNK) {
-                            score++;
-                            cell.type = MAP_CELL_TYPE_FREE;
-                        } else if(cell.type === MAP_CELL_TYPE_WALL) {
+                        if(cell.type === MAP_CELL_TYPE_WALL) {
                             return false;
                         }
 
                         currentCoordinate = newCoordinate;
                         return true;
+                    }
+
+                    function pickup() {
+                        actionsPerformed++;
+
+                        var cell = getCellByCoordinate(map, currentCoordinate);
+
+
+                        if (cell.type === MAP_CELL_TYPE_JUNK) {
+                            score++;
+                            cell.type = MAP_CELL_TYPE_FREE;                            
+                        }
                     }
 
                     return {
@@ -151,7 +160,8 @@
                         getCurrentPosition: getCurrentPosition,
                         getCellType: getCellType,
                         map: map,
-                        go: go
+                        go: go,
+                        pickup: pickup
                     };
                 }
 
@@ -204,6 +214,7 @@
                     }
 
                     function registerActionListeners(game, onActionCallback) {
+                        var KEY_SPACE = 32;
                         var KEY_LEFT_ARROW = 37;
                         var KEY_UP_ARROW = 38;
                         var KEY_RIGHT_ARROW = 39;
@@ -241,11 +252,14 @@
                             updateDirection(firstKey);
                             updateDirection(secondKey);
 
-                            if (!xDir && !yDir) {
+                            if (firstKey === KEY_SPACE) {
+                                game.pickup();
+                            } else if (xDir || yDir) {
+                                game.go(xDir, yDir);
+                            } else {
                                 return false;
                             }
 
-                            game.go(xDir, yDir);
                             onActionCallback();
                             return true;
                         }
