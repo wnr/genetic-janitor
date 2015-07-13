@@ -259,10 +259,9 @@
                             }
 
                             //TODO: Remove this for delay which supports diagonal play.
-                            if (!handleEvent(event.keyCode)) {
+                            if (handleEvent(event.keyCode)) {
                                 event.preventDefault();
                             }
-                            event.preventDefault();
                             return false;
 
                             firstKey = event.keyCode;
