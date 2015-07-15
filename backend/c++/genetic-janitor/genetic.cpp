@@ -1,6 +1,8 @@
 #include <vector>
 #include <sstream>
 #include <iostream>
+#include <iterator>
+#include <string>
 #include "genetic.h"
 
 using namespace genetic;
@@ -46,13 +48,30 @@ long genetic::play(const Individual& individual, std::function<bool(void)> isGam
     return getFitness();
 }
 
-std::vector<PlayResult> genetic::playAll(const Population &population, std::function<long(const Individual&)> playIndividual) {
+std::vector<PlayResult> genetic::playAll(const Population &population, int numMaps, std::function<long(const Individual&, int)> playIndividual) {
     const int POPULATION_SIZE = (int)population.size();
     std::vector<PlayResult> playResults;
 
-    for (int i = 0; i < POPULATION_SIZE; i++) {
-        long fitness = playIndividual(population[i]);
-        playResults.push_back(PlayResult(i, fitness));
+    #pragma omp parallel
+    {
+        std::vector<PlayResult> playResultsPrivate;
+
+        #pragma omp for nowait
+        for (int i = 0; i < POPULATION_SIZE; i++) {
+            PlayResult result(i, 0);
+
+            for (int j = 0; j < numMaps; j++) {
+                long fitness = playIndividual(population[i], j);
+                result.fitness += fitness;
+            }
+
+            result.fitness /= numMaps;
+
+            playResultsPrivate.push_back(result);
+        }
+
+        #pragma omp critical
+        playResults.insert(playResults.end(), playResultsPrivate.begin(), playResultsPrivate.end());
     }
 
     std::sort(playResults.begin(), playResults.end(), [](const PlayResult& a, const PlayResult& b){

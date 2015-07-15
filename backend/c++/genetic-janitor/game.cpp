@@ -36,17 +36,19 @@ void game::setCellByCoordinate(Map &map, int x, int y, Cell cell) {
 }
 
 vector<Cell> game::getSurroundingCellsByCoordinate(const Map &map, int x, int y, bool includeDiagonals) {
-    vector<Cell> cells;
-    cells.push_back(getCellByCoordinate(map, x - 1, y));
-    cells.push_back(getCellByCoordinate(map, x + 1, y));
-    cells.push_back(getCellByCoordinate(map, x, y - 1));
-    cells.push_back(getCellByCoordinate(map, x, y + 1));
+    const int NUM_CELLS = includeDiagonals ? 8 : 4;
+
+    vector<Cell> cells(NUM_CELLS);
+    cells[0] = getCellByCoordinate(map, x - 1, y);
+    cells[1] = getCellByCoordinate(map, x + 1, y);
+    cells[2] = (getCellByCoordinate(map, x, y - 1));
+    cells[3] = (getCellByCoordinate(map, x, y + 1));
 
     if (includeDiagonals) {
-        cells.push_back(getCellByCoordinate(map, x + 1, y - 1));
-        cells.push_back(getCellByCoordinate(map, x + 1, y + 1));
-        cells.push_back(getCellByCoordinate(map, x - 1, y + 1));
-        cells.push_back(getCellByCoordinate(map, x - 1, y - 1));
+        cells[4] = (getCellByCoordinate(map, x + 1, y - 1));
+        cells[5] = (getCellByCoordinate(map, x + 1, y + 1));
+        cells[6] = (getCellByCoordinate(map, x - 1, y + 1));
+        cells[7] = (getCellByCoordinate(map, x - 1, y - 1));
     }
 
     return cells;

@@ -1,4 +1,9 @@
+#ifdef _OPENMP
+   #include <omp.h>
+#endif
+
 #include <iostream>
+#include <chrono>
 #include <math.h>
 #include "game.h"
 #include "genetic.h"
@@ -16,7 +21,7 @@ const int ACTION_PICKUP     = 4;
 const int NUM_MAX_ACTIONS           = 100;
 const int NUM_CELL_VALUES           = 3;
 const int NUM_GENERATIONS           = 5000;
-//const int NUM_MAPS                  = 100;
+const int NUM_MAPS                  = 100;
 const int POPULATION_SIZE           = 200;
 const float RANDOM_POPULATION_SIZE  = 0.05f;
 const float MUTATION_PROBABILITY    = 0.3f;
@@ -62,21 +67,46 @@ long playIndividual(GameState &gameState, const Individual& individual) {
          std::function<long(void)>(std::bind(getFitness, std::ref(gameState))));
 }
 
+std::string formatThousandSeparator(long number) {
+    std::string str = to_string(number);
+
+    for (long i = (long)str.length() - 3; i > 0; i -= 3) {
+        str.insert(i, " ");
+    }
+
+    return str;
+}
+
 int main() {
     const vector<int> ACTIONS = {ACTION_GO_LEFT, ACTION_GO_UP, ACTION_GO_RIGHT, ACTION_GO_DOWN, ACTION_PICKUP};
     const long NUM_STATES = (const long)pow(NUM_CELL_VALUES, ACTIONS.size());
 
+    Genome winningGenome;
     RandomUtil randomUtil;
     std::function<Genome(void)> createGenome = std::bind(createRandomGenome, randomUtil, NUM_STATES, ACTIONS);
 
-    Map map = createMap(randomUtil, 10, (float)1/3);
     Population population = createPopulation(POPULATION_SIZE, createGenome);
 
-    auto start = chrono::steady_clock::now();
+    auto start = std::chrono::steady_clock::now();
+
+    std::vector<Map> maps;
+    int numAvergeJunk = 0;
+    for (int i = 0; i < NUM_MAPS; i++) {
+        auto map = createMap(randomUtil, 10, (float)1/3);
+        numAvergeJunk += game::getNumCellsOfType(map, CELL_TYPE_JUNK);
+        maps.push_back(map);
+    }
+    numAvergeJunk /= maps.size();
+
+    #ifdef _OPENMP
+    std::cout << "Running on " << omp_get_max_threads() << " threads :D" << endl;
+    #else
+    std::cout << "Running sequentially :(" << endl;
+    #endif
 
     for (int i = 0; i < NUM_GENERATIONS; i++) {
-        auto results = playAll(population, [&map](const Individual& individual){
-            GameState gameState = createGame(map, 1, 1);
+        auto results = playAll(population, NUM_MAPS, [&maps](const Individual& individual, int mapIndex){
+            GameState gameState = createGame(maps[mapIndex], 1, 1);
             return playIndividual(gameState, individual);
         });
 
@@ -90,9 +120,11 @@ int main() {
 
             std::cout << "Generation: " << i << "/" << NUM_GENERATIONS << endl;
             std::cout << "Average fitness: " << fitness << endl;
-            std::cout << "Best fitness:    " << results[0].fitness << "/" << game::getNumCellsOfType(map, CELL_TYPE_JUNK) * 10 - NUM_MAX_ACTIONS << endl;
+            std::cout << "Best fitness:    " << results[0].fitness << "/" << numAvergeJunk * 10 - NUM_MAX_ACTIONS << endl;
             std::cout << endl;
         }
+
+        winningGenome = population[results[0].individual].genome;
 
         Population selected = select(randomUtil, population, results, 0.1);
 
@@ -102,7 +134,8 @@ int main() {
 
     auto end = chrono::steady_clock::now();
     auto diff = end - start;
-    cout << "Runtime: " << chrono::duration <double, milli> (diff).count() << " ms" << endl;
+    cout << "Best genome: " + toString(winningGenome) << endl;
+    cout << "Runtime: " << formatThousandSeparator(chrono::duration <double, milli> (diff).count()) << " ms" << endl;
 
     return 0;
 }

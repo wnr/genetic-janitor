@@ -392,6 +392,19 @@
                         return individual;
                     }
 
+                    function createIndividualByBackendString(backendGenome) {
+                        var individual = [];
+
+                        for(var i = 0; i < backendGenome.length; i++) {
+                            var index = backendGenome[i] | 0;
+                            individual.push(POSSIBLE_ACTIONS[index]);
+                        }
+
+                        individual.id = idGenerator.next();
+
+                        return individual;
+                    }
+
                     function initPopulation(numIndividuals) {
                         var population = [];
                         for (var i = 0; i < numIndividuals; i++) {
@@ -408,11 +421,11 @@
                             var currentCoordinate = game.getCurrentPosition();
 
                             var coordinates = [
-                                Coordinate(currentCoordinate.x, currentCoordinate.y),
                                 Coordinate(currentCoordinate.x - 1, currentCoordinate.y),
-                                Coordinate(currentCoordinate.x, currentCoordinate.y + 1),
                                 Coordinate(currentCoordinate.x + 1, currentCoordinate.y),
                                 Coordinate(currentCoordinate.x, currentCoordinate.y - 1),
+                                Coordinate(currentCoordinate.x, currentCoordinate.y + 1),
+                                Coordinate(currentCoordinate.x, currentCoordinate.y)
                             ];
 
                             coordinates.forEach(function (coord) {
@@ -581,6 +594,8 @@
                     }
 
                     return {
+                        createRandomIndividual: createRandomIndividual,
+                        createIndividualByBackendString: createIndividualByBackendString,
                         initPopulation: initPopulation,
                         play: play,
                         playAll: playAll,
@@ -590,64 +605,69 @@
                     };
                 };
 
+                function performSimulation() {
+                    var NUM_GENERATIONS = 5000;
+                    var NUM_ACTIONS_LIMIT = 100;
+                    var NUM_MAPS = 10;
+                    var POPULATION_SIZE = 200;
+
+                    var geneticRunner = GeneticRunner(IdGenerator());
+                    var population = geneticRunner.initPopulation(POPULATION_SIZE);
+
+                    var bestIndividuals = [];
+
+                    var maps = [];
+                    for(var i = 0; i < NUM_MAPS; i++) {
+                        maps.push(Map(10, 0.3));
+                    }
+                    
+                    for (var i = 0; i < NUM_GENERATIONS; i++) {
+                        var results = geneticRunner.playAll(population, maps, NUM_ACTIONS_LIMIT);
+                        var selected = geneticRunner.select(results, 0.1);
+
+                        var selectedPopulation = [];
+                        selected.forEach(function (s) {
+                            selectedPopulation.push(population[s.individual]);
+                        });
+
+                        var individual = population[results[0].individual];
+                        individual.generation = i;
+                        bestIndividuals.push(individual);
+
+
+                        var resultsAverage = results.reduce(function(sum, r) {
+                            return sum + r.fitness;
+                        }, 0) / results.length;
+
+                        console.log(results[0].fitness, individual.id, resultsAverage);
+
+                        population = geneticRunner.breed(selectedPopulation, POPULATION_SIZE, 0.05, 0.3);
+
+                        console.log(i+1 + "/" + NUM_GENERATIONS);
+                    }
+
+                    window.winner = bestIndividuals[bestIndividuals.length-1];
+                }
+
 
                 // Run
                 var view = View();
-
-                var NUM_GENERATIONS = 5000;
-                var NUM_ACTIONS_LIMIT = 100;
-                var NUM_MAPS = 10;
-                var POPULATION_SIZE = 200;
-
                 var geneticRunner = GeneticRunner(IdGenerator());
-                var population = geneticRunner.initPopulation(POPULATION_SIZE);
 
-                var bestIndividuals = [];
-
-                var maps = [];
-                for(var i = 0; i < NUM_MAPS; i++) {
-                    maps.push(Map(10, 0.3));
-                }
-                
-                for (var i = 0; i < NUM_GENERATIONS; i++) {
-                    var results = geneticRunner.playAll(population, maps, NUM_ACTIONS_LIMIT);
-                    var selected = geneticRunner.select(results, 0.1);
-
-                    var selectedPopulation = [];
-                    selected.forEach(function (s) {
-                        selectedPopulation.push(population[s.individual]);
-                    });
-
-                    var individual = population[results[0].individual];
-                    individual.generation = i;
-                    bestIndividuals.push(individual);
-
-
-                    var resultsAverage = results.reduce(function(sum, r) {
-                        return sum + r.fitness;
-                    }, 0) / results.length;
-
-                    console.log(results[0].fitness, individual.id, resultsAverage);
-
-                    population = geneticRunner.breed(selectedPopulation, POPULATION_SIZE, 0.05, 0.3);
-
-                    console.log(i+1 + "/" + NUM_GENERATIONS);
-                }
-
-                window.winner = bestIndividuals[bestIndividuals.length-1];
-
-                function replay(map, individual) {
-                    renderGeneration(individual.generation);
-
+                function replay(map, actionsLimit, individual) {
                     var game = Game(map, Coordinate(1, 1));
 
-                    geneticRunner.play(game, NUM_ACTIONS_LIMIT, individual, 100, function onAction() {
+                    geneticRunner.play(game, actionsLimit, individual, 200, function onAction() {
                         view.render(game);
                         renderFitness(geneticRunner.fitness(game));
                     });
                 }
 
-                replay(maps[0], bestIndividuals[bestIndividuals.length-1]);
+                var map = Map(10, 1/3);
+                // var game = Game(map, Coordinate(1, 1));
+                // view.run(game);
+                var individual = geneticRunner.createIndividualByBackendString("010300122224340220111114210111010234214323310113411232333300210330343321133134423142113004133043044014422201412343340430044420323044420423313334032313023344320413444424440444411442441102124444404410121414141243240431444404440434420402110432141");
+                replay(map, 200, individual);
             })();
         </script>
     </body>
