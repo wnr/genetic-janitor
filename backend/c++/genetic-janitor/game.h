@@ -15,8 +15,8 @@ namespace game {
     Map createMap(RandomUtil& randomUtil, int size, float junkFillProbability);
     Cell getCellByCoordinate(const Map& map, int x, int y);
     void setCellByCoordinate(Map& map, int x, int y, Cell cell);
-    std::vector<Cell> getSurroundingCellsByCoordinate(const Map& map, int x, int y, bool includeDiagonals);
-    std::vector<Cell> getStateCells(const Map& map, int x, int y, bool includeDiagonals);
+    void getSurroundingCellsByCoordinate(const Map& map, int x, int y, bool includeDiagonals, Cell destination[], int destinationOffset, int& numSurroundingCells);
+    void getStateCells(const Map& map, int x, int y, bool includeDiagonals, Cell destination[], int destinationOffset);
     int getNumCellsOfType(const Map& map, Cell cell);
     std::string toString(Map map);
 

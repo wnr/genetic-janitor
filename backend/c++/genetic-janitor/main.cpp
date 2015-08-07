@@ -5,6 +5,7 @@
 #include <iostream>
 #include <chrono>
 #include <math.h>
+#include <array>
 #include "game.h"
 #include "genetic.h"
 
@@ -20,7 +21,7 @@ const int ACTION_PICKUP     = 4;
 
 const int NUM_MAX_ACTIONS           = 100;
 const int NUM_CELL_VALUES           = 3;
-const int NUM_GENERATIONS           = 5000;
+const int NUM_GENERATIONS           = 10;
 const int NUM_MAPS                  = 100;
 const int POPULATION_SIZE           = 200;
 const float RANDOM_POPULATION_SIZE  = 0.05f;
@@ -31,7 +32,14 @@ long getStateValue(const GameState& gameState, int numCellValues) {
     long state = 0;
     int count = 0;
 
-    std::vector<Cell> cells = getStateCells(gameState.map, gameState.playerX, gameState.playerY, false);
+    const Map &map = gameState.map;
+    int x = gameState.playerX;
+    int y = gameState.playerY;
+    bool includeDiagonals = false;
+
+    std::array<Cell, 5> cells;
+
+    getStateCells(gameState.map, gameState.playerX, gameState.playerY, false, cells.data(), 0);
 
     for (int i = 0; i < cells.size(); i++) {
         state += cells[i] * pow(numCellValues, count);

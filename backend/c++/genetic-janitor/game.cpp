@@ -35,29 +35,29 @@ void game::setCellByCoordinate(Map &map, int x, int y, Cell cell) {
     map[y][x] = cell;
 }
 
-vector<Cell> game::getSurroundingCellsByCoordinate(const Map &map, int x, int y, bool includeDiagonals) {
+void game::getSurroundingCellsByCoordinate(const Map& map, int x, int y, bool includeDiagonals, Cell destination[], int destinationOffset, int& numSurroundingCells) {
     const int NUM_CELLS = includeDiagonals ? 8 : 4;
 
-    vector<Cell> cells(NUM_CELLS);
-    cells[0] = getCellByCoordinate(map, x - 1, y);
-    cells[1] = getCellByCoordinate(map, x + 1, y);
-    cells[2] = (getCellByCoordinate(map, x, y - 1));
-    cells[3] = (getCellByCoordinate(map, x, y + 1));
+    destination[destinationOffset + 0] = getCellByCoordinate(map, x - 1, y);
+    destination[destinationOffset + 1] = getCellByCoordinate(map, x + 1, y);
+    destination[destinationOffset + 2] = getCellByCoordinate(map, x, y - 1);
+    destination[destinationOffset + 3] = getCellByCoordinate(map, x, y + 1);
 
     if (includeDiagonals) {
-        cells[4] = (getCellByCoordinate(map, x + 1, y - 1));
-        cells[5] = (getCellByCoordinate(map, x + 1, y + 1));
-        cells[6] = (getCellByCoordinate(map, x - 1, y + 1));
-        cells[7] = (getCellByCoordinate(map, x - 1, y - 1));
+        destination[destinationOffset + 4] = getCellByCoordinate(map, x + 1, y - 1);
+        destination[destinationOffset + 5] = getCellByCoordinate(map, x + 1, y + 1);
+        destination[destinationOffset + 6] = getCellByCoordinate(map, x - 1, y + 1);
+        destination[destinationOffset + 7] = getCellByCoordinate(map, x - 1, y - 1);
     }
 
-    return cells;
+    numSurroundingCells = NUM_CELLS;
 }
 
-vector<Cell> game::getStateCells(const Map &map, int x, int y, bool includeDiagonals) {
-    vector<Cell> cells = getSurroundingCellsByCoordinate(map, x, y, includeDiagonals);
-    cells.push_back(getCellByCoordinate(map, x, y));
-    return cells;
+void game::getStateCells(const Map &map, int x, int y, bool includeDiagonals, Cell destination[], int destinationOffset) {
+    int numSurroundingCells;
+
+    getSurroundingCellsByCoordinate(map, x, y, includeDiagonals, destination, destinationOffset, numSurroundingCells);
+    destination[destinationOffset + numSurroundingCells] = (getCellByCoordinate(map, x, y));
 }
 
 int game::getNumCellsOfType(const Map &map, Cell cell) {
